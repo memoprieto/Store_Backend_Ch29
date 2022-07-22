@@ -1,11 +1,12 @@
-from itertools import product
-from flask import Flask
+#from itertools import product
+from flask import Flask, request
 from about import me
 from data import mock_data
+import random
 import json
+#from config import db   #
 
 app=Flask('server')
-
 
 @app.get("/")
 def home():
@@ -15,8 +16,6 @@ def home():
 def test():
     return "This is just a simple test"
 
-# GET /about
-# show your name
 @app.get("/about")
 def about_me():
     return "Guillermo Prieto"
@@ -29,45 +28,36 @@ def about_me():
 def version():
     return "1.0"
 
-
-# get /api/about
-# return first lastname
 @app.get("/api/about")
 def about_json():
     #return me["first"] + " " + me["last"]
     #return f'{me["first"]} {me["last"]}'
     return json.dumps(me) # parse the dict into a json string
 
-
-# get / api/products
-# return mock_data a json string
-
 @app.get("/api/products")
 def get_products():
     return json.dumps(mock_data)
 
+@app.post("/api/products")
+def save_product():
+    product=request.get_json() # get an dictionary or a list
+    # add product to the catalog
+    mock_data.append(product)
+    # assign an id to the product
+    product["id"]=random.randint(1, 893214789)
+    # return the product as json
+    return json.dumps(product)
+
+    
 
 @app.get("/api/products/<id>")
 def get_product_by_id(id):
-    #return "Id is: " + id
-
-    # travel mock_data list
-    # compare the produc id with the id
-    # if they match, return the prod as json
+    
     for prod in mock_data:
         if str(prod["id"]) == id:
             return json.dumps(prod)
 
     return "NOT FOUND"
-
-# GET /api/products_category/<category>
-# return all the products whose category is
-
-# create a results list
-# travel the list, get every prod
-# if prod -> category is equal to the category variable
-# add prod to a list
-# outside the for loop, return the results list as json
 
 @app.get("/api/products_category/<category>")
 def get_prods_category(category):
@@ -80,7 +70,6 @@ def get_prods_category(category):
 
     return json.dumps(results)
 
-
 # GET /api/product_cheapest
 @app.get("/api/product_cheapest")
 def get_cheapest():
@@ -91,15 +80,6 @@ def get_cheapest():
 
     return json.dumps(solution)
 
-
-
-## GET /api/categories
-## return the list of categories
-## 1 - return Ok
-#  2 - travel mock_data, and print the category of every product
-## 3 - put the category in a list and at the end of the for loop, return the list as json
-# for loop here, get the prod
-# print the prod category
 @app.get("/api/categories")
 def get_categories():
     categories = []
@@ -110,6 +90,27 @@ def get_categories():
 
     return json.dumps(categories)
 
-    #return "OK"
+# getreturn the number of prods in the catalog (mock_data)
+# /api/count_products
+
+@app.get("/api/count_products")
+def get_products_count():
+    count=len(mock_data)
+
+    return json.dumps({"countn": count})
+
+# get /api/search/<text>
+# return all prods whose title contains text
+@app.get("/api/search/<text>")
+def search_products(text):
+    results=[]
+
+    # do the magic here
+    text=text.lower()
+    for prod in mock_data:
+       if text in prod["title"].lower():
+            results.append(prod) 
+
+    return json.dumps(results)
 
 app.run(debug=True)
